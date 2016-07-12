@@ -71,7 +71,7 @@ public interface WindowedStream<T> extends ApexStream<T>
    * Count of all tuples
    * @return new stream of Integer
    */
-  <STREAM extends WindowedStream<Tuple<Long>>> STREAM count();
+  <STREAM extends WindowedStream<Tuple.WindowedTuple<Long>>> STREAM count();
 
   /**
    * Count tuples by the key<br>
@@ -79,7 +79,7 @@ public interface WindowedStream<T> extends ApexStream<T>
    * If not, use the tuple itself as a key
    * @return new stream of Map
    */
-  <K, STREAM extends WindowedStream<Tuple<KeyValPair<K, Long>>>> STREAM countByKey(Function.MapFunction<T, Tuple<KeyValPair<K, Long>>> convertToKeyValue);
+  <K, STREAM extends WindowedStream<Tuple.WindowedTuple<KeyValPair<K, Long>>>> STREAM countByKey(Function.MapFunction<T, Tuple<KeyValPair<K, Long>>> convertToKeyValue);
 
   /**
    *
@@ -95,14 +95,14 @@ public interface WindowedStream<T> extends ApexStream<T>
    * Return top tuples by the selected key
    * @return new stream of Key and top N tuple of the key
    */
-  <K, V, STREAM extends WindowedStream<Tuple<KeyValPair<K, List<V>>>>> STREAM topByKey(int N, Function.MapFunction<T, Tuple<KeyValPair<K, V>>> convertToKeyVal);
+  <K, V, STREAM extends WindowedStream<Tuple.WindowedTuple<KeyValPair<K, List<V>>>>> STREAM topByKey(int N, Function.MapFunction<T, Tuple<KeyValPair<K, V>>> convertToKeyVal);
 
   /**
    *
    * Return top tuples of all tuples in the window
    * @return new stream of Map
    */
-  <STREAM extends WindowedStream<Tuple<List<T>>>> STREAM top(int N);
+  <STREAM extends WindowedStream<Tuple.WindowedTuple<List<T>>>> STREAM top(int N);
 
   <O, STREAM extends WindowedStream<O>> STREAM combineByKey();
 
@@ -114,7 +114,7 @@ public interface WindowedStream<T> extends ApexStream<T>
    * @param reduce reduce function
    * @return new stream of same type
    */
-  <STREAM extends WindowedStream<Tuple<T>>> STREAM reduce(ReduceFn<T> reduce);
+  <STREAM extends WindowedStream<Tuple.WindowedTuple<T>>> STREAM reduce(ReduceFn<T> reduce);
 
   /**
    * Reduce transformation by selected key <br>
@@ -122,7 +122,7 @@ public interface WindowedStream<T> extends ApexStream<T>
    * @param reduce reduce function
    * @return new stream of same type
    */
-  <K, V, STREAM extends WindowedStream<Tuple<KeyValPair<K, V>>>> STREAM reduceByKey(ReduceFn<V> reduce, Function.MapFunction<T, Tuple<KeyValPair<K, V>>> convertToKeyVal);
+  <K, V, STREAM extends WindowedStream<Tuple.WindowedTuple<KeyValPair<K, V>>>> STREAM reduceByKey(ReduceFn<V> reduce, Function.MapFunction<T, Tuple<KeyValPair<K, V>>> convertToKeyVal);
 
   /**
    * Fold transformation<br>
@@ -132,7 +132,7 @@ public interface WindowedStream<T> extends ApexStream<T>
    * @param <O> Result type
    * @return new stream of type O
    */
-  <O, STREAM extends WindowedStream<Tuple<O>>> STREAM fold(FoldFn<T, O> fold);
+  <O, STREAM extends WindowedStream<Tuple.WindowedTuple<O>>> STREAM fold(FoldFn<T, O> fold);
 
 
   /**
@@ -142,7 +142,7 @@ public interface WindowedStream<T> extends ApexStream<T>
    * @param <O> Result type
    * @return new stream of type O
    */
-  <K, V, O, STREAM extends WindowedStream<Tuple<KeyValPair<K, O>>>> STREAM foldByKey(FoldFn<V, O> fold, Function.MapFunction<T, Tuple<KeyValPair<K, V>>> convertToKeyVal);
+  <K, V, O, STREAM extends WindowedStream<Tuple.WindowedTuple<KeyValPair<K, O>>>> STREAM foldByKey(FoldFn<V, O> fold, Function.MapFunction<T, Tuple<KeyValPair<K, V>>> convertToKeyVal);
 
 
 

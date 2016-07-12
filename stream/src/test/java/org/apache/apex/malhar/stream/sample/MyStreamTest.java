@@ -69,7 +69,7 @@ public class MyStreamTest
 
     testId = "testMethodChainWordcount";
 
-    TupleCollector<Tuple<KeyValPair<String, Long>>> collector = new TupleCollector<>();
+    TupleCollector<Tuple.WindowedTuple<KeyValPair<String, Long>>> collector = new TupleCollector<>();
     collector.id = testId;
     new MyStream<>(StreamFactory.fromFolder("./src/test/resources/data"))
         .<String, MyStream<String>>flatMap(new Function.FlatMapFunction<String, String>()
@@ -113,7 +113,7 @@ public class MyStreamTest
   {
     testId = "testNonMethodChainWordcount";
 
-    TupleCollector<Tuple<KeyValPair<String, Long>>> collector = new TupleCollector<>();
+    TupleCollector<Tuple.WindowedTuple<KeyValPair<String, Long>>> collector = new TupleCollector<>();
     collector.id = testId;
     MyStream<String> mystream = new MyStream<>(StreamFactory
         .fromFolder("./src/test/resources/data"))

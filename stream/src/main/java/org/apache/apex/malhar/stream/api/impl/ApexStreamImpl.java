@@ -491,7 +491,8 @@ public class ApexStreamImpl<T> implements ApexStream<T>
     return windowedStream;
   }
 
-  protected <O> ApexStream<O> newStream(DagMeta graph, Brick<O> newBrick) {
+  protected <O> ApexStream<O> newStream(DagMeta graph, Brick<O> newBrick)
+  {
     ApexStreamImpl<O> newstream = new ApexStreamImpl<>();
     newstream.graph = graph;
     newstream.lastBrick = newBrick;

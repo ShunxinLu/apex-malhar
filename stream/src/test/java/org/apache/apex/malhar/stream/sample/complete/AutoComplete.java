@@ -188,7 +188,7 @@ public class AutoComplete
    * Lower latency, but more expensive.
    */
   private static class ComputeTopFlat
-      extends CompositeStreamTransform<CompletionCandidate, Tuple<KeyValPair<String, List<CompletionCandidate>>>>
+      extends CompositeStreamTransform<CompletionCandidate, Tuple.WindowedTuple<KeyValPair<String, List<CompletionCandidate>>>>
   {
     private final int candidatesPerPrefix;
     private final int minPrefix;
@@ -200,7 +200,7 @@ public class AutoComplete
     }
 
     @Override
-    public ApexStream<Tuple<KeyValPair<String, List<CompletionCandidate>>>> compose(
+    public ApexStream<Tuple.WindowedTuple<KeyValPair<String, List<CompletionCandidate>>>> compose(
         ApexStream<CompletionCandidate> input)
     {
       return input.flatMap(new AllPrefixes(minPrefix)).window(new WindowOption.GlobalWindow())
@@ -254,7 +254,7 @@ public class AutoComplete
    * the most common tokens per prefix.
    */
   public static class ComputeTopCompletions
-      extends CompositeStreamTransform<String, Tuple<KeyValPair<String, List<CompletionCandidate>>>>
+      extends CompositeStreamTransform<String, Tuple.WindowedTuple<KeyValPair<String, List<CompletionCandidate>>>>
   {
     private final int candidatesPerPrefix;
     private final boolean recursive;
@@ -272,7 +272,7 @@ public class AutoComplete
 
     @Override
     @SuppressWarnings("unchecked")
-    public ApexStream<Tuple<KeyValPair<String, List<CompletionCandidate>>>> compose(ApexStream<String> inputStream)
+    public ApexStream<Tuple.WindowedTuple<KeyValPair<String, List<CompletionCandidate>>>> compose(ApexStream<String> inputStream)
     {
       if (!(inputStream instanceof WindowedStream)) {
         return null;
@@ -286,11 +286,11 @@ public class AutoComplete
             {
               return new Tuple.PlainTuple<>(new KeyValPair<>(input, 1l));
             }
-          }).map(new Function.MapFunction<Tuple<KeyValPair<String, Long>>, CompletionCandidate>()
+          }).map(new Function.MapFunction<Tuple.WindowedTuple<KeyValPair<String,Long>>, CompletionCandidate>()
 
           {
             @Override
-            public CompletionCandidate f(Tuple<KeyValPair<String, Long>> input)
+            public CompletionCandidate f(Tuple.WindowedTuple<KeyValPair<String, Long>> input)
             {
               return new CompletionCandidate(input.getValue().getKey(), input.getValue().getValue());
             }

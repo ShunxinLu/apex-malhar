@@ -44,7 +44,7 @@ public class LocalTestWithoutStreamApplication
   public void testNonStreamApplicationWordcount() throws Exception
   {
 
-    TupleCollector<Tuple<KeyValPair<String, Long>>> collector = new TupleCollector<>();
+    TupleCollector<Tuple.WindowedTuple<KeyValPair<String, Long>>> collector = new TupleCollector<>();
     collector.id = "testNonStreamApplicationWordcount";
     final Map<String, Long> expected = new HashMap<>();
     expected.put("error", 2l);

@@ -71,10 +71,10 @@ public class CombinePerKeyExamples {
   /**
    * Prepares the output data which is in same bean
    */
-  static class FormatShakespeareOutputFn implements Function.MapFunction<Tuple<KeyValPair<String, String>>, SampleBean>
+  static class FormatShakespeareOutputFn implements Function.MapFunction<Tuple.WindowedTuple<KeyValPair<String, String>>, SampleBean>
   {
     @Override
-    public SampleBean f(Tuple<KeyValPair<String, String>> input)
+    public SampleBean f(Tuple.WindowedTuple<KeyValPair<String, String>> input)
     {
       return new SampleBean(input.getValue().getKey(), input.getValue().getValue(), null);
     }

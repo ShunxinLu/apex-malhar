@@ -61,7 +61,7 @@ public class ApexWindowedStreamImpl<T> extends ApexStreamImpl<T> implements Wind
 
 
   @Override
-  public <STREAM extends WindowedStream<Tuple<Long>>> STREAM count()
+  public <STREAM extends WindowedStream<Tuple.WindowedTuple<Long>>> STREAM count()
   {
     WindowedStream<Tuple<Long>> innerstream = map(new Function.MapFunction<T, Tuple<Long>>()
     {
@@ -81,7 +81,7 @@ public class ApexWindowedStreamImpl<T> extends ApexStreamImpl<T> implements Wind
   }
 
   @Override
-  public <K, STREAM extends WindowedStream<Tuple<KeyValPair<K, Long>>>> STREAM countByKey(Function.MapFunction<T, Tuple<KeyValPair<K, Long>>> convertToKeyValue)
+  public <K, STREAM extends WindowedStream<Tuple.WindowedTuple<KeyValPair<K, Long>>>> STREAM countByKey(Function.MapFunction<T, Tuple<KeyValPair<K, Long>>> convertToKeyValue)
   {
     WindowedStream<Tuple<KeyValPair<K, Long>>> kvstream = map(convertToKeyValue);
     KeyedWindowedOperatorImpl<K, Long, MutableLong, Long> keyedWindowedOperator = createKeyedWindowedOperator(new Count());
@@ -96,7 +96,7 @@ public class ApexWindowedStreamImpl<T> extends ApexStreamImpl<T> implements Wind
   }
 
   @Override
-  public <K, V, STREAM extends WindowedStream<Tuple<KeyValPair<K, List<V>>>>> STREAM topByKey(int N, Function.MapFunction<T, Tuple<KeyValPair<K, V>>> convertToKeyVal)
+  public <K, V, STREAM extends WindowedStream<Tuple.WindowedTuple<KeyValPair<K, List<V>>>>> STREAM topByKey(int N, Function.MapFunction<T, Tuple<KeyValPair<K, V>>> convertToKeyVal)
   {
     WindowedStream<Tuple<KeyValPair<K, V>>> kvstream = map(convertToKeyVal);
     TopN<V> top = new TopN<>();
@@ -107,7 +107,7 @@ public class ApexWindowedStreamImpl<T> extends ApexStreamImpl<T> implements Wind
 
 
   @Override
-  public <STREAM extends WindowedStream<Tuple<List<T>>>> STREAM top(int N)
+  public <STREAM extends WindowedStream<Tuple.WindowedTuple<List<T>>>> STREAM top(int N)
   {
     WindowedStream<Tuple<T>> innerstream = map(new Function.MapFunction<T, Tuple<T>>()
     {
@@ -138,7 +138,7 @@ public class ApexWindowedStreamImpl<T> extends ApexStreamImpl<T> implements Wind
   }
 
   @Override
-  public <STREAM extends WindowedStream<Tuple<T>>> STREAM reduce(ReduceFn<T> reduce)
+  public <STREAM extends WindowedStream<Tuple.WindowedTuple<T>>> STREAM reduce(ReduceFn<T> reduce)
   {
     WindowedStream<Tuple<T>> innerstream = map(new Function.MapFunction<T, Tuple<T>>()
     {
@@ -157,7 +157,7 @@ public class ApexWindowedStreamImpl<T> extends ApexStreamImpl<T> implements Wind
   }
 
   @Override
-  public <K, V, STREAM extends WindowedStream<Tuple<KeyValPair<K, V>>>> STREAM reduceByKey(ReduceFn<V> reduce, Function.MapFunction<T, Tuple<KeyValPair<K, V>>> convertToKeyVal)
+  public <K, V, STREAM extends WindowedStream<Tuple.WindowedTuple<KeyValPair<K, V>>>> STREAM reduceByKey(ReduceFn<V> reduce, Function.MapFunction<T, Tuple<KeyValPair<K, V>>> convertToKeyVal)
   {
     WindowedStream<Tuple<KeyValPair<K, V>>> kvstream = map(convertToKeyVal);
     KeyedWindowedOperatorImpl<K, V, V, V> keyedWindowedOperator = createKeyedWindowedOperator(reduce);
@@ -166,7 +166,7 @@ public class ApexWindowedStreamImpl<T> extends ApexStreamImpl<T> implements Wind
 
 
   @Override
-  public <O, STREAM extends WindowedStream<Tuple<O>>> STREAM fold(FoldFn<T, O> fold)
+  public <O, STREAM extends WindowedStream<Tuple.WindowedTuple<O>>> STREAM fold(FoldFn<T, O> fold)
   {
     WindowedStream<Tuple<T>> innerstream = map(new Function.MapFunction<T, Tuple<T>>()
     {
@@ -186,7 +186,7 @@ public class ApexWindowedStreamImpl<T> extends ApexStreamImpl<T> implements Wind
   }
 
   @Override
-  public <K, V, O, STREAM extends WindowedStream<Tuple<KeyValPair<K, O>>>> STREAM foldByKey(FoldFn<V, O> fold, Function.MapFunction<T, Tuple<KeyValPair<K, V>>> convertToKeyVal)
+  public <K, V, O, STREAM extends WindowedStream<Tuple.WindowedTuple<KeyValPair<K, O>>>> STREAM foldByKey(FoldFn<V, O> fold, Function.MapFunction<T, Tuple<KeyValPair<K, V>>> convertToKeyVal)
   {
     WindowedStream<Tuple<KeyValPair<K, V>>> kvstream = map(convertToKeyVal);
     KeyedWindowedOperatorImpl<K, V, O, O> keyedWindowedOperator = createKeyedWindowedOperator(fold);
