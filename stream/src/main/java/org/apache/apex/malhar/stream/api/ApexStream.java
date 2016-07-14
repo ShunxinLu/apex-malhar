@@ -18,15 +18,13 @@
  */
 package org.apache.apex.malhar.stream.api;
 
-
 import java.util.concurrent.Callable;
 
 import org.joda.time.Duration;
 
-import org.apache.apex.malhar.stream.api.function.Function;
 import org.apache.apex.malhar.lib.window.TriggerOption;
 import org.apache.apex.malhar.lib.window.WindowOption;
-
+import org.apache.apex.malhar.stream.api.function.Function;
 
 import com.datatorrent.api.Attribute;
 import com.datatorrent.api.Context.DAGContext;

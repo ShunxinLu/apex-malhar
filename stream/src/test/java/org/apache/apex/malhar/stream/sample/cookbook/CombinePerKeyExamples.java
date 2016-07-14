@@ -18,12 +18,11 @@
 package org.apache.apex.malhar.stream.sample.cookbook;
 
 import org.apache.apex.malhar.lib.window.Tuple;
+import org.apache.apex.malhar.lib.window.WindowOption;
 import org.apache.apex.malhar.stream.api.ApexStream;
 import org.apache.apex.malhar.stream.api.CompositeStreamTransform;
 import org.apache.apex.malhar.stream.api.function.Function;
 import org.apache.apex.malhar.stream.api.impl.StreamFactory;
-import org.apache.apex.malhar.lib.window.WindowOption;
-import org.apache.apex.malhar.stream.api.impl.accumulation.FoldFn;
 import org.apache.apex.malhar.stream.api.impl.accumulation.ReduceFn;
 
 import com.datatorrent.api.Context;
@@ -40,10 +39,10 @@ import com.datatorrent.lib.util.KeyValPair;
  * key-grouped Collection
  *
  */
-public class CombinePerKeyExamples {
+public class CombinePerKeyExamples
+{
   // Use the shakespeare public BigQuery sample
-  private static final String SHAKESPEARE_TABLE =
-      "publicdata:samples.shakespeare";
+  private static final String SHAKESPEARE_TABLE = "publicdata:samples.shakespeare";
   // We'll track words >= this word length across all plays in the table.
   private static final int MIN_WORD_LENGTH = 9;
 
@@ -195,7 +194,7 @@ public class CombinePerKeyExamples {
   public static class SampleInput implements InputOperator
   {
 
-    public final transient DefaultOutputPort<SampleBean> beanOutput= new DefaultOutputPort();
+    public final transient DefaultOutputPort<SampleBean> beanOutput = new DefaultOutputPort();
 
     @Override
     public void emitTuples()
@@ -229,10 +228,9 @@ public class CombinePerKeyExamples {
   }
 
 
-  public static void main(String[] args)
-      throws Exception {
+  public static void main(String[] args) throws Exception
+  {
     SampleInput input = new SampleInput();
-    StreamFactory.fromInput(input, input.beanOutput)
-        .addCompositeStreams(new PlaysForWord());
+    StreamFactory.fromInput(input, input.beanOutput).addCompositeStreams(new PlaysForWord());
   }
 }

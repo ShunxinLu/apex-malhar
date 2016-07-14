@@ -22,12 +22,12 @@ import java.util.Arrays;
 
 import org.joda.time.Duration;
 
+import org.apache.apex.malhar.lib.window.TriggerOption;
+import org.apache.apex.malhar.lib.window.Tuple;
+import org.apache.apex.malhar.lib.window.WindowOption;
 import org.apache.apex.malhar.stream.api.ApexStream;
 import org.apache.apex.malhar.stream.api.function.Function;
 import org.apache.apex.malhar.stream.api.impl.StreamFactory;
-import org.apache.apex.malhar.lib.window.TriggerOption;
-import org.apache.apex.malhar.lib.window.WindowOption;
-import org.apache.apex.malhar.lib.window.Tuple;
 import org.apache.hadoop.conf.Configuration;
 
 import com.datatorrent.api.DAG;
@@ -59,13 +59,13 @@ public class ApplicationWithStreamAPI implements StreamingApplication
     stream.print();
     stream.window(new WindowOption.GlobalWindow(), new TriggerOption().withEarlyFiringsAtEvery(Duration
         .millis(1000)).accumulatingFiredPanes()).countByKey(new Function.MapFunction<String, Tuple<KeyValPair<String, Long>>>()
-    {
-      @Override
-      public Tuple<KeyValPair<String, Long>> f(String input)
-      {
-        return new Tuple.PlainTuple(new KeyValPair<>(input, 1l));
-      }
-    }).print();
+        {
+          @Override
+          public Tuple<KeyValPair<String, Long>> f(String input)
+          {
+            return new Tuple.PlainTuple(new KeyValPair<>(input, 1L));
+          }
+        }).print();
     stream.populateDag(dag);
 
   }

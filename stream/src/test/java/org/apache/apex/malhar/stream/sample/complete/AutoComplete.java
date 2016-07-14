@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -17,7 +17,6 @@
  * under the License.
  */
 package org.apache.apex.malhar.stream.sample.complete;
-
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -31,14 +30,14 @@ import java.util.regex.Pattern;
 
 import org.joda.time.Duration;
 
+import org.apache.apex.malhar.lib.window.TriggerOption;
+import org.apache.apex.malhar.lib.window.Tuple;
+import org.apache.apex.malhar.lib.window.WindowOption;
 import org.apache.apex.malhar.stream.api.ApexStream;
 import org.apache.apex.malhar.stream.api.CompositeStreamTransform;
 import org.apache.apex.malhar.stream.api.WindowedStream;
 import org.apache.apex.malhar.stream.api.function.Function;
 import org.apache.apex.malhar.stream.api.impl.StreamFactory;
-import org.apache.apex.malhar.lib.window.TriggerOption;
-import org.apache.apex.malhar.lib.window.Tuple;
-import org.apache.apex.malhar.lib.window.WindowOption;
 import org.apache.commons.io.IOUtils;
 
 import com.google.common.base.Throwables;
@@ -48,7 +47,6 @@ import com.datatorrent.api.Context;
 import com.datatorrent.api.DefaultOutputPort;
 import com.datatorrent.api.InputOperator;
 import com.datatorrent.common.util.BaseOperator;
-
 import com.datatorrent.lib.util.KeyValPair;
 
 /**
@@ -60,7 +58,6 @@ import com.datatorrent.lib.util.KeyValPair;
  */
 public class AutoComplete
 {
-
 
   public static class TweetsInput extends BaseOperator implements InputOperator
   {
@@ -129,29 +126,36 @@ public class AutoComplete
   /**
    * Class used to store tag-count pairs.
    */
-  public static class CompletionCandidate implements Comparable<CompletionCandidate> {
+  public static class CompletionCandidate implements Comparable<CompletionCandidate>
+  {
 
     private long count;
     private String value;
 
-    public CompletionCandidate(String value, long count) {
+    public CompletionCandidate(String value, long count)
+    {
       this.value = value;
       this.count = count;
     }
 
-    public long getCount() {
+    public long getCount()
+    {
       return count;
     }
 
-    public String getValue() {
+    public String getValue()
+    {
       return value;
     }
 
     // Empty constructor required for Avro decoding.
-    public CompletionCandidate() {}
+    public CompletionCandidate()
+    {
+    }
 
     @Override
-    public int compareTo(CompletionCandidate o) {
+    public int compareTo(CompletionCandidate o)
+    {
       if (this.count < o.count) {
         return -1;
       } else if (this.count == o.count) {
@@ -162,9 +166,10 @@ public class AutoComplete
     }
 
     @Override
-    public boolean equals(Object other) {
+    public boolean equals(Object other)
+    {
       if (other instanceof CompletionCandidate) {
-        CompletionCandidate that = (CompletionCandidate) other;
+        CompletionCandidate that = (CompletionCandidate)other;
         return this.count == that.count && this.value.equals(that.value);
       } else {
         return false;
@@ -172,23 +177,24 @@ public class AutoComplete
     }
 
     @Override
-    public int hashCode() {
+    public int hashCode()
+    {
       return Long.valueOf(count).hashCode() ^ value.hashCode();
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
       return "CompletionCandidate[" + value + ", " + count + "]";
     }
   }
-
-
 
   /**
    * Lower latency, but more expensive.
    */
   private static class ComputeTopFlat
-      extends CompositeStreamTransform<CompletionCandidate, Tuple.WindowedTuple<KeyValPair<String, List<CompletionCandidate>>>>
+      extends CompositeStreamTransform<CompletionCandidate, Tuple.WindowedTuple<KeyValPair<String,
+      List<CompletionCandidate>>>>
   {
     private final int candidatesPerPrefix;
     private final int minPrefix;
@@ -216,8 +222,8 @@ public class AutoComplete
     }
   }
 
-
-  private static class AllPrefixes implements Function.FlatMapFunction<CompletionCandidate, KeyValPair<String, CompletionCandidate>>
+  private static class AllPrefixes implements Function.FlatMapFunction<CompletionCandidate, KeyValPair<String,
+      CompletionCandidate>>
   {
     private final int minPrefix;
     private final int maxPrefix;
@@ -231,6 +237,7 @@ public class AutoComplete
     {
       this(minPrefix, Integer.MAX_VALUE);
     }
+
     public AllPrefixes(int minPrefix, int maxPrefix)
     {
       this.minPrefix = minPrefix;
@@ -272,7 +279,8 @@ public class AutoComplete
 
     @Override
     @SuppressWarnings("unchecked")
-    public ApexStream<Tuple.WindowedTuple<KeyValPair<String, List<CompletionCandidate>>>> compose(ApexStream<String> inputStream)
+    public ApexStream<Tuple.WindowedTuple<KeyValPair<String, List<CompletionCandidate>>>> compose(ApexStream<String>
+        inputStream)
     {
       if (!(inputStream instanceof WindowedStream)) {
         return null;
@@ -284,10 +292,10 @@ public class AutoComplete
             @Override
             public Tuple<KeyValPair<String, Long>> f(String input)
             {
-              return new Tuple.PlainTuple<>(new KeyValPair<>(input, 1l));
+              return new Tuple.PlainTuple<>(new KeyValPair<>(input, 1L));
             }
-          }).map(new Function.MapFunction<Tuple.WindowedTuple<KeyValPair<String,Long>>, CompletionCandidate>()
-
+          })
+          .map(new Function.MapFunction<Tuple.WindowedTuple<KeyValPair<String, Long>>, CompletionCandidate>()
           {
             @Override
             public CompletionCandidate f(Tuple.WindowedTuple<KeyValPair<String, Long>> input)
@@ -301,11 +309,6 @@ public class AutoComplete
     }
   }
 
-
-
-
-
-
   public static void main(String[] args)
   {
     boolean stream = Sets.newHashSet(args).contains("--streaming");
@@ -318,7 +321,8 @@ public class AutoComplete
     ApexStream<String> tags = StreamFactory.fromInput(input, input.output)
         .flatMap(new ExtractHashtags());
     tags.print();
-        tags.window(windowOption, new TriggerOption().accumulatingFiredPanes().withEarlyFiringsAtEvery(Duration.standardSeconds(10)))
+    tags.window(windowOption, new TriggerOption().accumulatingFiredPanes()
+        .withEarlyFiringsAtEvery(Duration.standardSeconds(10)))
         .addCompositeStreams(ComputeTopCompletions.top(10, true)).print()
         .runEmbedded(false, 100000, new Callable<Boolean>()
         {

@@ -23,9 +23,9 @@ import java.util.Map;
 
 import org.joda.time.Duration;
 
-import org.apache.apex.malhar.stream.api.function.Function;
 import org.apache.apex.malhar.lib.window.TriggerOption;
 import org.apache.apex.malhar.lib.window.Tuple;
+import org.apache.apex.malhar.stream.api.function.Function;
 import org.apache.apex.malhar.stream.api.impl.accumulation.FoldFn;
 import org.apache.apex.malhar.stream.api.impl.accumulation.ReduceFn;
 

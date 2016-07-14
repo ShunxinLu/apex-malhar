@@ -56,12 +56,14 @@ public class TopN<T> implements Accumulation<T, List<T>, List<T>>
   {
     int k = 0;
     for (T inMemory : accumulatedValue) {
-      if (comparator!=null) {
-        if (comparator.compare(inMemory, input) < 0)
+      if (comparator != null) {
+        if (comparator.compare(inMemory, input) < 0) {
           break;
+        }
       } else if (input instanceof Comparable) {
-        if (((Comparable<T>)input).compareTo(inMemory) > 0)
+        if (((Comparable<T>)input).compareTo(inMemory) > 0) {
           break;
+        }
       } else {
         throw new RuntimeException("Tuple cannot be compared");
       }

@@ -24,18 +24,19 @@ import java.util.Map;
 import org.joda.time.Duration;
 
 import org.apache.apex.malhar.lib.window.Accumulation;
+import org.apache.apex.malhar.lib.window.TriggerOption;
+import org.apache.apex.malhar.lib.window.Tuple;
+import org.apache.apex.malhar.lib.window.WindowOption;
+import org.apache.apex.malhar.lib.window.WindowState;
+
+import org.apache.apex.malhar.lib.window.impl.InMemoryWindowedKeyedStorage;
+import org.apache.apex.malhar.lib.window.impl.InMemoryWindowedStorage;
+import org.apache.apex.malhar.lib.window.impl.KeyedWindowedOperatorImpl;
 import org.apache.apex.malhar.lib.window.impl.WindowedOperatorImpl;
 import org.apache.apex.malhar.stream.api.ApexStream;
 import org.apache.apex.malhar.stream.api.WindowedStream;
 import org.apache.apex.malhar.stream.api.function.Function;
 
-import org.apache.apex.malhar.lib.window.TriggerOption;
-import org.apache.apex.malhar.lib.window.Tuple;
-import org.apache.apex.malhar.lib.window.WindowOption;
-import org.apache.apex.malhar.lib.window.WindowState;
-import org.apache.apex.malhar.lib.window.impl.InMemoryWindowedKeyedStorage;
-import org.apache.apex.malhar.lib.window.impl.InMemoryWindowedStorage;
-import org.apache.apex.malhar.lib.window.impl.KeyedWindowedOperatorImpl;
 import org.apache.apex.malhar.stream.api.impl.accumulation.Count;
 import org.apache.apex.malhar.stream.api.impl.accumulation.FoldFn;
 import org.apache.apex.malhar.stream.api.impl.accumulation.ReduceFn;
@@ -60,6 +61,10 @@ public class ApexWindowedStreamImpl<T> extends ApexStreamImpl<T> implements Wind
   protected Duration allowedLateness;
 
 
+  public ApexWindowedStreamImpl()
+  {
+  }
+
   @Override
   public <STREAM extends WindowedStream<Tuple.WindowedTuple<Long>>> STREAM count()
   {
@@ -70,9 +75,9 @@ public class ApexWindowedStreamImpl<T> extends ApexStreamImpl<T> implements Wind
       public Tuple<Long> f(T input)
       {
         if (input instanceof Tuple.TimestampedTuple) {
-          return new Tuple.TimestampedTuple<>(((Tuple.TimestampedTuple)input).getTimestamp(), 1l);
+          return new Tuple.TimestampedTuple<>(((Tuple.TimestampedTuple)input).getTimestamp(), 1L);
         } else {
-          return new Tuple.TimestampedTuple<>(System.currentTimeMillis(), 1l);
+          return new Tuple.TimestampedTuple<>(System.currentTimeMillis(), 1L);
         }
       }
     });
@@ -236,12 +241,15 @@ public class ApexWindowedStreamImpl<T> extends ApexStreamImpl<T> implements Wind
     windowedOperator.setDataStorage(new InMemoryWindowedStorage<ACCU>());
     windowedOperator.setRetractionStorage(new InMemoryWindowedStorage<OUT>());
     windowedOperator.setWindowStateStorage(new InMemoryWindowedStorage<WindowState>());
-    if (windowOption != null)
+    if (windowOption != null) {
       windowedOperator.setWindowOption(windowOption);
-    if (triggerOption != null)
+    }
+    if (triggerOption != null) {
       windowedOperator.setTriggerOption(triggerOption);
-    if (allowedLateness != null)
+    }
+    if (allowedLateness != null) {
       windowedOperator.setAllowedLateness(allowedLateness);
+    }
     windowedOperator.setAccumulation(accumulationFn);
     return windowedOperator;
   }
@@ -254,12 +262,15 @@ public class ApexWindowedStreamImpl<T> extends ApexStreamImpl<T> implements Wind
     keyedWindowedOperator.setDataStorage(new InMemoryWindowedKeyedStorage<K, ACCU>());
     keyedWindowedOperator.setRetractionStorage(new InMemoryWindowedKeyedStorage<K, OUT>());
     keyedWindowedOperator.setWindowStateStorage(new InMemoryWindowedStorage<WindowState>());
-    if (windowOption != null)
+    if (windowOption != null) {
       keyedWindowedOperator.setWindowOption(windowOption);
-    if (triggerOption != null)
+    }
+    if (triggerOption != null) {
       keyedWindowedOperator.setTriggerOption(triggerOption);
-    if (allowedLateness != null)
+    }
+    if (allowedLateness != null) {
       keyedWindowedOperator.setAllowedLateness(allowedLateness);
+    }
 
     keyedWindowedOperator.setAccumulation(accumulationFn);
     return keyedWindowedOperator;

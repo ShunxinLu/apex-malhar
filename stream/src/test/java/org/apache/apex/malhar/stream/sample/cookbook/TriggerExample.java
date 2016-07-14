@@ -22,14 +22,13 @@ import java.util.Objects;
 
 import org.joda.time.Duration;
 
+import org.apache.apex.malhar.lib.window.TriggerOption;
+import org.apache.apex.malhar.lib.window.WindowOption;
 import org.apache.apex.malhar.stream.api.ApexStream;
 import org.apache.apex.malhar.stream.api.CompositeStreamTransform;
 import org.apache.apex.malhar.stream.api.WindowedStream;
 import org.apache.apex.malhar.stream.api.function.Function;
 import org.apache.apex.malhar.stream.api.impl.StreamFactory;
-import org.apache.apex.malhar.lib.window.TriggerOption;
-import org.apache.apex.malhar.lib.window.WindowOption;
-
 
 import com.datatorrent.lib.util.KeyValPair;
 
@@ -116,7 +115,8 @@ import com.datatorrent.lib.util.KeyValPair;
  * and then exits.
  */
 
-public class TriggerExample {
+public class TriggerExample
+{
   //Numeric value of fixed window duration, in minutes
   public static final int WINDOW_DURATION = 30;
   // Constants used in triggers.
@@ -160,10 +160,10 @@ public class TriggerExample {
   {
     private int windowDuration;
 
-    CalculateTotalFlow(int windowDuration) {
+    CalculateTotalFlow(int windowDuration)
+    {
       this.windowDuration = windowDuration;
     }
-
 
     @Override
     public ApexStream<SampleBean> compose(ApexStream<String> inputStream)
@@ -190,11 +190,8 @@ public class TriggerExample {
 
       ApexStream<SampleBean> defaultTriggerResults = inputStream
           .window(new WindowOption.TimeWindows(Duration.standardMinutes(windowDuration)),
-              new TriggerOption().discardingFiredPanes())
+          new TriggerOption().discardingFiredPanes())
           .addCompositeStreams(new TotalFlow("default"));
-
-
-
 
       // Concept #2: Late data with the default trigger
       // This uses the same trigger as concept #1, but allows data that is up to ONE_DAY late. This
@@ -215,10 +212,9 @@ public class TriggerExample {
       // 5             | 60                 | 1                 | false   | false  | LATE
       ApexStream<SampleBean> withAllowedLatenessResults = inputStream
           .window(new WindowOption.TimeWindows(Duration.standardMinutes(windowDuration)),
-              new TriggerOption().discardingFiredPanes(),
-              Duration.standardDays(1))
+          new TriggerOption().discardingFiredPanes(),
+          Duration.standardDays(1))
           .addCompositeStreams(new TotalFlow("withAllowedLateness"));
-
 
       // Concept #3: How to get speculative estimates
       // We can specify a trigger that fires independent of the watermark, for instance after
@@ -240,14 +236,13 @@ public class TriggerExample {
       ApexStream<SampleBean> speculativeResults = inputStream
           .window(new WindowOption.TimeWindows(Duration.standardMinutes(windowDuration)),
               //Trigger fires every minute
-              new TriggerOption().withEarlyFiringsAtEvery(Duration.standardMinutes(1))
+          new TriggerOption().withEarlyFiringsAtEvery(Duration.standardMinutes(1))
                   // After emitting each pane, it will continue accumulating the elements so that each
                   // approximation includes all of the previous data in addition to the newly arrived
                   // data.
-                  .accumulatingFiredPanes(),
-              Duration.standardDays(1))
+          .accumulatingFiredPanes(),
+          Duration.standardDays(1))
           .addCompositeStreams(new TotalFlow("speculative"));
-
 
       // Concept #4: Combining late data and speculative estimates
       // We can put the previous concepts together to get EARLY estimates, an ON_TIME result,
@@ -274,18 +269,17 @@ public class TriggerExample {
       ApexStream<SampleBean> sequentialResults = inputStream
           .window(new WindowOption.TimeWindows(Duration.standardMinutes(windowDuration)),
               // Speculative every ONE_MINUTE
-              new TriggerOption().withEarlyFiringsAtEvery(Duration.standardMinutes(1))
-                  .withLateFiringsAtEvery(Duration.standardMinutes(5))
+          new TriggerOption().withEarlyFiringsAtEvery(Duration.standardMinutes(1))
+          .withLateFiringsAtEvery(Duration.standardMinutes(5))
                   // After emitting each pane, it will continue accumulating the elements so that each
                   // approximation includes all of the previous data in addition to the newly arrived
                   // data.
-                  .accumulatingFiredPanes(),
-              Duration.standardDays(1))
+          .accumulatingFiredPanes(),
+          Duration.standardDays(1))
           .addCompositeStreams(new TotalFlow("sequential"));
 
       return sequentialResults;
     }
-
 
   }
 
@@ -298,10 +292,12 @@ public class TriggerExample {
    * objects, to save to BigQuery.
    */
   static class TotalFlow extends
-      CompositeStreamTransform <String, SampleBean> {
+      CompositeStreamTransform<String, SampleBean>
+  {
     private String triggerType;
 
-    public TotalFlow(String triggerType) {
+    public TotalFlow(String triggerType)
+    {
       this.triggerType = triggerType;
     }
 
@@ -312,43 +308,49 @@ public class TriggerExample {
         throw new RuntimeException("Not supported here");
       }
       WindowedStream<String> windowedStream = (WindowedStream<String>)inputStream;
-      ApexStream<KeyValPair<String, Iterable<Integer>>> flowPerFreeway = windowedStream.groupByKey(new ExtractFlowInfo());
+      ApexStream<KeyValPair<String, Iterable<Integer>>> flowPerFreeway = windowedStream
+          .groupByKey(new ExtractFlowInfo());
 
-      return flowPerFreeway.map(new Function.MapFunction<KeyValPair<String,Iterable<Integer>>, KeyValPair<String, String>>()
-      {
-        @Override
-        public KeyValPair<String, String> f(KeyValPair<String, Iterable<Integer>> input)
-        {
-          Iterable<Integer> flows = input.getValue();
-          Integer sum = 0;
-          Long numberOfRecords = 0L;
-          for (Integer value : flows) {
-            sum += value;
-            numberOfRecords++;
-          }
-          return new KeyValPair<>(input.getKey(), sum + "," + numberOfRecords);
-        }
-      })
-      .map(new FormatTotalFlow(triggerType));
+      return flowPerFreeway
+          .map(new Function.MapFunction<KeyValPair<String, Iterable<Integer>>, KeyValPair<String, String>>()
+          {
+            @Override
+            public KeyValPair<String, String> f(KeyValPair<String, Iterable<Integer>> input)
+            {
+              Iterable<Integer> flows = input.getValue();
+              Integer sum = 0;
+              Long numberOfRecords = 0L;
+              for (Integer value : flows) {
+                sum += value;
+                numberOfRecords++;
+              }
+              return new KeyValPair<>(input.getKey(), sum + "," + numberOfRecords);
+            }
+          })
+          .map(new FormatTotalFlow(triggerType));
     }
   }
 
   /**
    * Format the results of the Total flow calculation to a TableRow, to save to BigQuery.
    * Adds the triggerType, pane information, processing time and the window timestamp.
-   * */
-  static class FormatTotalFlow implements Function.MapFunction<KeyValPair<String, String>, SampleBean> {
+   */
+  static class FormatTotalFlow implements Function.MapFunction<KeyValPair<String, String>, SampleBean>
+  {
     private String triggerType;
 
-    public FormatTotalFlow(String triggerType) {
+    public FormatTotalFlow(String triggerType)
+    {
       this.triggerType = triggerType;
     }
+
     @Override
     public SampleBean f(KeyValPair<String, String> input)
     {
       String[] values = input.getValue().split(",");
       //TODO need to have a callback to get the metadata like window id, pane id, timestamps etc.
-      return new SampleBean(triggerType, input.getKey(), Integer.parseInt(values[0]), Long.parseLong(values[1]), null, false, false, null, null, new Date());
+      return new SampleBean(triggerType, input.getKey(), Integer.parseInt(values[0]), Long
+          .parseLong(values[1]), null, false, false, null, null, new Date());
     }
   }
 
@@ -403,10 +405,13 @@ public class TriggerExample {
     @Override
     public int hashCode()
     {
-      return Objects.hash(trigger_type, freeway, total_flow, number_of_records, window, isFirst, isLast, timing, event_time, processing_time);
+      return Objects
+          .hash(trigger_type, freeway, total_flow, number_of_records, window, isFirst, isLast, timing, event_time,
+              processing_time);
     }
 
-    public SampleBean(String trigger_type, String freeway, int total_flow, long number_of_records, String window, boolean isFirst, boolean isLast, Date timing, Date event_time, Date processing_time)
+    public SampleBean(String trigger_type, String freeway, int total_flow, long number_of_records, String window,
+        boolean isFirst, boolean isLast, Date timing, Date event_time, Date processing_time)
     {
 
       this.trigger_type = trigger_type;
@@ -547,31 +552,26 @@ public class TriggerExample {
       if (totalFlow == null || totalFlow <= 0) {
         return null;
       }
-      return new KeyValPair<>(freeway,  totalFlow);
+      return new KeyValPair<>(freeway, totalFlow);
     }
   }
 
-
-
   private static final String PUBSUB_TIMESTAMP_LABEL_KEY = "timestamp_ms";
 
-  public static void main(String[] args) throws Exception {
+  public static void main(String[] args) throws Exception
+  {
     StreamFactory.fromFolder("some folder")
         .addCompositeStreams(new CalculateTotalFlow(60));
 
   }
 
-
-  private static Integer tryIntegerParse(String number) {
+  private static Integer tryIntegerParse(String number)
+  {
     try {
       return Integer.parseInt(number);
     } catch (NumberFormatException e) {
       return null;
     }
   }
-
-
-
-
 
 }

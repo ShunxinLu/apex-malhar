@@ -40,6 +40,7 @@ import org.apache.apex.malhar.stream.api.function.Function.FlatMapFunction;
 import org.apache.apex.malhar.stream.api.operator.FunctionOperator;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.hadoop.conf.Configuration;
 
 import com.datatorrent.api.Attribute;
 import com.datatorrent.api.Context;
@@ -148,8 +149,6 @@ public class ApexStreamImpl<T> implements ApexStream<T>
    */
   protected DagMeta graph;
 
-  protected ApexStream<T> delegator;
-
   /**
    * Right now the stream only support single extend point
    * You can have multiple downstream operators connect to this single extend point though
@@ -171,13 +170,11 @@ public class ApexStreamImpl<T> implements ApexStream<T>
     graph = new DagMeta();
   }
 
-  public ApexStreamImpl(ApexStream<T> apexStream)
+  public ApexStreamImpl(ApexStreamImpl<T> apexStream)
   {
-    this.delegator = apexStream;
-    if (delegator != null && delegator instanceof ApexStreamImpl) {
-      graph = ((ApexStreamImpl)delegator).graph;
-      lastBrick = ((ApexStreamImpl<T>)delegator).lastBrick;
-    }
+    //copy the variables over to the new ApexStreamImpl
+    graph = apexStream.graph;
+    lastBrick = apexStream.lastBrick;
   }
 
   public ApexStreamImpl(DagMeta graph)
@@ -255,15 +252,6 @@ public class ApexStreamImpl<T> implements ApexStream<T>
   public <O, STREAM extends ApexStream<O>> STREAM addOperator(String opName, Operator op, Operator.InputPort<T> inputPort, Operator.OutputPort<O> outputPort)
   {
 
-    if (delegator != null) {
-      ApexStreamImpl<O> apexStream = delegator.addOperator(opName, op, inputPort, outputPort);
-      try {
-        return (STREAM)this.getClass().getConstructor(ApexStream.class).newInstance(apexStream);
-      } catch (Exception e) {
-        throw new RuntimeException("You have to override the default constructor with ApexStreamImpl as delegator");
-      }
-    }
-
     checkArguments(op, inputPort, outputPort);
 
     DagMeta.NodeMeta nm = null;
@@ -271,7 +259,6 @@ public class ApexStreamImpl<T> implements ApexStream<T>
     if (lastBrick == null) {
       nm = graph.addNode(opName, op, null, null, inputPort);
     } else {
-
       nm = graph.addNode(opName, op, lastBrick.nodeMeta, lastBrick.lastOutput, inputPort);
     }
 
@@ -282,7 +269,17 @@ public class ApexStreamImpl<T> implements ApexStream<T>
       newBrick.lastStream = Pair.<Operator.OutputPort, Operator.InputPort>of(lastBrick.lastOutput, inputPort);
     }
 
-    return (STREAM)newStream(this.graph, newBrick);
+    if (this.getClass() == ApexStreamImpl.class || this.getClass() == ApexWindowedStreamImpl.class) {
+      return (STREAM)newStream(this.graph, newBrick);
+    } else {
+      try {
+        return (STREAM)this.getClass().getConstructor(ApexStreamImpl.class).newInstance(newStream(this.graph, newBrick));
+      } catch (Exception e) {
+        throw new RuntimeException("You have to override the default constructor with ApexStreamImpl as default parameter", e);
+      }
+    }
+
+
   }
 
   @Override
@@ -442,6 +439,7 @@ public class ApexStreamImpl<T> implements ApexStream<T>
   {
     LocalMode lma = LocalMode.newInstance();
     populateDag(lma.getDAG());
+    DAG dag = lma.getDAG();
     LocalMode.Controller lc = lma.getController();
     if (lc instanceof StramLocalCluster) {
       ((StramLocalCluster)lc).setExitCondition(exitCondition);
@@ -484,7 +482,6 @@ public class ApexStreamImpl<T> implements ApexStream<T>
     ApexWindowedStreamImpl<T> windowedStream = new ApexWindowedStreamImpl<>();
     windowedStream.lastBrick = lastBrick;
     windowedStream.graph = graph;
-    windowedStream.delegator = delegator;
     windowedStream.windowOption = windowOption;
     windowedStream.triggerOption = triggerOption;
     windowedStream.allowedLateness = allowLateness;
