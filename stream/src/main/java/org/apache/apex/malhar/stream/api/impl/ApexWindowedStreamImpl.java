@@ -91,13 +91,6 @@ public class ApexWindowedStreamImpl<T> extends ApexStreamImpl<T> implements Wind
     WindowedStream<Tuple<KeyValPair<K, Long>>> kvstream = map(convertToKeyValue);
     KeyedWindowedOperatorImpl<K, Long, MutableLong, Long> keyedWindowedOperator = createKeyedWindowedOperator(new Count());
     return kvstream.addOperator(keyedWindowedOperator, keyedWindowedOperator.input, keyedWindowedOperator.output);
-
-  }
-
-  @Override
-  public <STREAM extends WindowedStream<Map<Object, Integer>>> STREAM countByKey(int key)
-  {
-    return null;
   }
 
   @Override
@@ -231,6 +224,9 @@ public class ApexWindowedStreamImpl<T> extends ApexStreamImpl<T> implements Wind
     ApexWindowedStreamImpl<O> newstream = new ApexWindowedStreamImpl<>();
     newstream.graph = graph;
     newstream.lastBrick = newBrick;
+    newstream.windowOption = this.windowOption;
+    newstream.triggerOption = this.triggerOption;
+    newstream.allowedLateness = this.allowedLateness;
     return newstream;
   }
 

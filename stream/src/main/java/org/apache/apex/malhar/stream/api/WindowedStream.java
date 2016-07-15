@@ -81,14 +81,6 @@ public interface WindowedStream<T> extends ApexStream<T>
    */
   <K, STREAM extends WindowedStream<Tuple.WindowedTuple<KeyValPair<K, Long>>>> STREAM countByKey(Function.MapFunction<T, Tuple<KeyValPair<K, Long>>> convertToKeyValue);
 
-  /**
-   *
-   * Count tuples by the indexed key
-   * @param key the index of the field in the tuple that are used as key
-   * @return new stream of Map
-   */
-  <STREAM extends WindowedStream<Map<Object, Integer>>> STREAM countByKey(int key);
-
 
   /**
    *
