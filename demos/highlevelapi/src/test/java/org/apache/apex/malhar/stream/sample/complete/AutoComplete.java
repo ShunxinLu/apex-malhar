@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package complete;
+package org.apache.apex.malhar.stream.sample.complete;
 
 
 import java.io.BufferedReader;
@@ -204,7 +204,7 @@ public class AutoComplete
     public ApexStream<Tuple.WindowedTuple<KeyValPair<String, List<CompletionCandidate>>>> compose(
       ApexStream<CompletionCandidate> input)
     {
-      return input.flatMap(new AllPrefixes(minPrefix)).window(new WindowOption.GlobalWindow())
+      return ((WindowedStream<KeyValPair<String, CompletionCandidate>>)input.flatMap(new AllPrefixes(minPrefix)))//.window(new WindowOption.GlobalWindow())
         .topByKey(10, new Function.MapFunction<KeyValPair<String, CompletionCandidate>, Tuple<KeyValPair<String,
           CompletionCandidate>>>()
         {
@@ -320,11 +320,10 @@ public class AutoComplete
 
     ApexStream<String> tags = StreamFactory.fromInput(input, input.output)
       .flatMap(new ExtractHashtags());
-    //tags.print();
-    DAG dag = tags.window(windowOption, new TriggerOption().accumulatingFiredPanes().withEarlyFiringsAtEvery(Duration.standardSeconds(10)))
-      .addCompositeStreams(ComputeTopCompletions.top(10, true)).print().createDag();
-    System.out.println(dag);
-        /*.runEmbedded(false, 100000, new Callable<Boolean>()
+    tags.print();
+    tags.window(windowOption, new TriggerOption().accumulatingFiredPanes().withEarlyFiringsAtEvery(Duration.standardSeconds(10)))
+      .addCompositeStreams(ComputeTopCompletions.top(10, true)).print()
+        .runEmbedded(false, 100000, new Callable<Boolean>()
         {
           @Override
           public Boolean call() throws Exception
@@ -332,7 +331,5 @@ public class AutoComplete
             return false;
           }
         });
-        */
-
   }
 }
