@@ -5,10 +5,11 @@ import java.nio.charset.CharsetEncoder;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.datatorrent.api.StreamingApplication;
+import com.datatorrent.api.annotation.ApplicationAnnotation;
 import org.joda.time.Duration;
 
 import org.apache.apex.malhar.lib.window.TriggerOption;
@@ -21,8 +22,11 @@ import org.apache.apex.malhar.stream.api.WindowedStream;
 import org.apache.apex.malhar.stream.api.function.Function;
 import org.apache.apex.malhar.stream.api.impl.StreamFactory;
 
+import org.apache.hadoop.conf.Configuration;
+
 import com.google.common.collect.Sets;
 
+import com.datatorrent.api.DAG;
 import com.datatorrent.contrib.twitter.TwitterSampleInput;
 import com.datatorrent.lib.util.KeyValPair;
 
@@ -30,7 +34,8 @@ import com.datatorrent.lib.util.KeyValPair;
  * Created by Shunxin on 7/12/16.
  */
 
-public class TwitterAutoComplete
+@ApplicationAnnotation(name = "TwitterAutoComplete")
+public class TwitterAutoComplete implements StreamingApplication
 {
   public static class StringUtils
   {
@@ -160,12 +165,12 @@ public class TwitterAutoComplete
 
     public AllPrefixes()
     {
-      this(0, Integer.MAX_VALUE);
+      this(0, 3);//Integer.MAX_VALUE);
     }
 
     public AllPrefixes(int minPrefix)
     {
-      this(minPrefix, Integer.MAX_VALUE);
+      this(minPrefix, 3);//Integer.MAX_VALUE);
     }
 
     public AllPrefixes(int minPrefix, int maxPrefix)
@@ -241,7 +246,7 @@ public class TwitterAutoComplete
 
 
 
-  static class SomeFilter implements Function.FilterFunction<String>
+  static class ASCIIFilter implements Function.FilterFunction<String>
   {
     @Override
     public Boolean f(String input)
@@ -250,28 +255,23 @@ public class TwitterAutoComplete
     }
   }
 
-  public static void main(String[] args)
-  {
-    boolean stream = Sets.newHashSet(args).contains("--streaming");
+
+  @Override
+  public void populateDAG(DAG dag, Configuration conf) {
+
     TwitterSampleInput input = new TwitterSampleInput();
 
-    WindowOption windowOption = stream
-      ? new WindowOption.TimeWindows(Duration.standardMinutes(30)).slideBy(Duration.standardSeconds(5))
-      : new WindowOption.GlobalWindow();
+    WindowOption windowOption = new WindowOption.GlobalWindow();
 
-    ApexStream<String> tags = StreamFactory.fromInput(input, input.text)
-      .filter(new SomeFilter())
+    ApexStream<String> tags = StreamFactory.fromInput("tweetSampler", input, input.text)
+      .filter(new ASCIIFilter())
       .flatMap(new TwitterAutoComplete.ExtractHashtags());
     //tags.print();
-    tags.window(windowOption, new TriggerOption().accumulatingFiredPanes().withEarlyFiringsAtEvery(Duration.standardSeconds(10)))
-      .addCompositeStreams(TwitterAutoComplete.ComputeTopCompletions.top(10, true)).print()
-      .runEmbedded(false, 100000, new Callable<Boolean>()
-      {
-        @Override
-        public Boolean call() throws Exception
-        {
-          return false;
-        }
-      });
+    ApexStream<Tuple.WindowedTuple<KeyValPair<String, List<CompletionCandidate>>>> s =
+      tags.window(windowOption, new TriggerOption().accumulatingFiredPanes().withEarlyFiringsAtEvery(Duration.standardSeconds(10)))
+      .addCompositeStreams(TwitterAutoComplete.ComputeTopCompletions.top(10, true)).print();
+
+    s.populateDag(dag);
   }
+
 }

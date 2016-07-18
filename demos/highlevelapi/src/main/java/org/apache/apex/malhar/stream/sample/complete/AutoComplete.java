@@ -18,6 +18,22 @@
  */
 package org.apache.apex.malhar.stream.sample.complete;
 
+import com.datatorrent.api.*;
+import com.datatorrent.api.annotation.ApplicationAnnotation;
+import com.datatorrent.common.util.BaseOperator;
+import com.datatorrent.lib.util.KeyValPair;
+import com.google.common.base.Throwables;
+import org.apache.apex.malhar.lib.window.TriggerOption;
+import org.apache.apex.malhar.lib.window.Tuple;
+import org.apache.apex.malhar.lib.window.WindowOption;
+import org.apache.apex.malhar.stream.api.ApexStream;
+import org.apache.apex.malhar.stream.api.CompositeStreamTransform;
+import org.apache.apex.malhar.stream.api.WindowedStream;
+import org.apache.apex.malhar.stream.api.function.Function;
+import org.apache.apex.malhar.stream.api.impl.StreamFactory;
+import org.apache.commons.io.IOUtils;
+import org.apache.hadoop.conf.Configuration;
+import org.joda.time.Duration;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -25,32 +41,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import com.datatorrent.api.DAG;
-import org.joda.time.Duration;
-
-import org.apache.apex.malhar.stream.api.ApexStream;
-import org.apache.apex.malhar.stream.api.CompositeStreamTransform;
-import org.apache.apex.malhar.stream.api.WindowedStream;
-import org.apache.apex.malhar.stream.api.function.Function;
-import org.apache.apex.malhar.stream.api.impl.StreamFactory;
-import org.apache.apex.malhar.lib.window.TriggerOption;
-import org.apache.apex.malhar.lib.window.Tuple;
-import org.apache.apex.malhar.lib.window.WindowOption;
-import org.apache.commons.io.IOUtils;
-
-import com.google.common.base.Throwables;
-import com.google.common.collect.Sets;
-
-import com.datatorrent.api.Context;
-import com.datatorrent.api.DefaultOutputPort;
-import com.datatorrent.api.InputOperator;
-import com.datatorrent.common.util.BaseOperator;
-
-import com.datatorrent.lib.util.KeyValPair;
 
 /**
  * An example that computes the most popular hash tags
@@ -59,7 +51,8 @@ import com.datatorrent.lib.util.KeyValPair;
  * <p>This will update the datastore every 10 seconds based on the last
  * 30 minutes of data received.
  */
-public class AutoComplete
+@ApplicationAnnotation(name = "AutoComplete")
+public class AutoComplete implements StreamingApplication
 {
 
 
@@ -213,7 +206,7 @@ public class AutoComplete
           {
             return new Tuple.PlainTuple<>(tuple);
           }
-        }).print();
+        });
     }
   }
 
@@ -307,29 +300,19 @@ public class AutoComplete
 
 
 
+  @Override
+  public void populateDAG(DAG dag, Configuration conf) {
 
-
-  public static void main(String[] args)
-  {
-    boolean stream = Sets.newHashSet(args).contains("--streaming");
     TweetsInput input = new TweetsInput();
 
-    WindowOption windowOption = stream
-      ? new WindowOption.TimeWindows(Duration.standardMinutes(30)).slideBy(Duration.standardSeconds(5))
-      : new WindowOption.GlobalWindow();
+    WindowOption windowOption = new WindowOption.GlobalWindow();
 
-    ApexStream<String> tags = StreamFactory.fromInput(input, input.output)
+    ApexStream<String> tags = StreamFactory.fromInput( input, input.output)
       .flatMap(new ExtractHashtags());
     tags.print();
-    tags.window(windowOption, new TriggerOption().accumulatingFiredPanes().withEarlyFiringsAtEvery(Duration.standardSeconds(10)))
-      .addCompositeStreams(ComputeTopCompletions.top(10, true)).print()
-        .runEmbedded(false, 100000, new Callable<Boolean>()
-        {
-          @Override
-          public Boolean call() throws Exception
-          {
-            return false;
-          }
-        });
+    ApexStream<Tuple.WindowedTuple<KeyValPair<String, List<CompletionCandidate>>>> s =
+      tags.window(windowOption, new TriggerOption().accumulatingFiredPanes().withEarlyFiringsAtEvery(Duration.standardSeconds(10)))
+      .addCompositeStreams(ComputeTopCompletions.top(10, true)).print();
+    s.populateDag(dag);
   }
 }

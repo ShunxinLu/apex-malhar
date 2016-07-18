@@ -149,6 +149,21 @@
           </transformationSets>
         </configuration>
       </plugin>
+
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>2.3.2</version>
+        <configuration>
+          <encoding>UTF-8</encoding>
+          <source>1.7</source>
+          <target>1.7</target>
+          <debug>true</debug>
+          <optimize>false</optimize>
+          <showDeprecation>true</showDeprecation>
+          <showWarnings>true</showWarnings>
+        </configuration>
+      </plugin>
+
       <!-- copy xml javadoc to class jar -->
       <plugin>
         <artifactId>maven-resources-plugin</artifactId>

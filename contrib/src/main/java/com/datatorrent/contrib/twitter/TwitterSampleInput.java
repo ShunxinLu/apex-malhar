@@ -93,13 +93,13 @@ public class TwitterSampleInput implements InputOperator, ActivationListener<Ope
 
   /* Following twitter access credentials should be set before using this operator. */
   @NotNull
-  private String consumerKey = "TCM0dX1jfVCqtSy0VoKqTmjgA";
+  private String consumerKey;// = "TCM0dX1jfVCqtSy0VoKqTmjgA";
   @NotNull
-  private String consumerSecret = "hO8QxNfLMpMLnAmwOb50YzZXVrUbY0MMZ11n5Q1FYsDOPXCJ7V";
+  private String consumerSecret;// = "hO8QxNfLMpMLnAmwOb50YzZXVrUbY0MMZ11n5Q1FYsDOPXCJ7V";
   @NotNull
-  private String accessToken = "90819718-0djLN49fDwGdvlukLCC1bXwCYJ5snZbcV3pfIzvBJ";
+  private String accessToken;// = "90819718-0djLN49fDwGdvlukLCC1bXwCYJ5snZbcV3pfIzvBJ";
   @NotNull
-  private String accessTokenSecret = "3btrakD4YHRUdYeaDtrTtVgLXjzefsbxFx78dzmS6LOV3";
+  private String accessTokenSecret;// = "3btrakD4YHRUdYeaDtrTtVgLXjzefsbxFx78dzmS6LOV3";
   /* If twitter connection breaks then do we need to reconnect or exit */
   private boolean reConnect;
 
