@@ -19,7 +19,13 @@
 
 package org.apache.apex.examples.innerjoin;
 
+import com.google.common.collect.Multimap;
 import org.apache.apex.malhar.lib.join.POJOInnerJoinOperator;
+import org.apache.apex.malhar.lib.window.WindowOption;
+import org.apache.apex.malhar.lib.window.WindowedMergeOperator;
+import org.apache.apex.malhar.lib.window.accumulation.PojoInnerJoin;
+import org.apache.apex.malhar.lib.window.impl.InMemoryWindowedStorage;
+import org.apache.apex.malhar.lib.window.impl.WindowedMergeOperatorImpl;
 import org.apache.hadoop.conf.Configuration;
 
 import com.datatorrent.api.Context;
@@ -27,6 +33,9 @@ import com.datatorrent.api.DAG;
 import com.datatorrent.api.StreamingApplication;
 import com.datatorrent.api.annotation.ApplicationAnnotation;
 import com.datatorrent.lib.io.ConsoleOutputOperator;
+
+import java.util.List;
+import java.util.Set;
 
 @ApplicationAnnotation(name = "InnerJoinExample")
 /**
@@ -44,17 +53,16 @@ public class InnerJoinApplication implements StreamingApplication
     productGenerator.setSalesEvent(false);
 
     // Inner join Operator
-    POJOInnerJoinOperator join = dag.addOperator("Join", new POJOInnerJoinOperator());
+    WindowedMergeOperatorImpl<Object, Object, List<Set<Object>>, List<List<Object>>> join
+        = dag.addOperator("Join", new WindowedMergeOperatorImpl<Object, Object, List<Set<Object>>, List<List<Object>>>());
+    join.setWindowOption(new WindowOption.GlobalWindow());
+    join.setAccumulation(new PojoInnerJoin(POJOGenerator.OutputEvent.class, new String[]{"productId"}, new String[]{"productId"}));
+    join.setDataStorage(new InMemoryWindowedStorage<List<Set<Object>>>());
     ConsoleOutputOperator output = dag.addOperator("Output", new ConsoleOutputOperator());
 
     // Streams
-    dag.addStream("SalesToJoin", salesGenerator.output, join.input1);
+    dag.addStream("SalesToJoin", salesGenerator.output, join.input);
     dag.addStream("ProductToJoin", productGenerator.output, join.input2);
-    dag.addStream("JoinToConsole", join.outputPort, output.input);
-
-    // Setting tuple class properties to the ports of join operator
-    dag.setInputPortAttribute(join.input1, Context.PortContext.TUPLE_CLASS, POJOGenerator.SalesEvent.class);
-    dag.setInputPortAttribute(join.input2, Context.PortContext.TUPLE_CLASS, POJOGenerator.ProductEvent.class);
-    dag.setOutputPortAttribute(join.outputPort,Context.PortContext.TUPLE_CLASS, POJOGenerator.SalesEvent.class);
+    dag.addStream("JoinToConsole", join.output, output.input);
   }
 }

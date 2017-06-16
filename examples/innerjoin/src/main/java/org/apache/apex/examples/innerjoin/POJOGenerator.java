@@ -224,6 +224,65 @@ public class POJOGenerator implements InputOperator
     }
   }
 
+  public static class OutputEvent
+  {
+    public int customerId;
+    public double amount;
+    public int productId;
+    public int productCategory;
+    public long timestamp;
+
+    public int getCustomerId()
+    {
+      return customerId;
+    }
+
+    public void setCustomerId(int customerId)
+    {
+      this.customerId = customerId;
+    }
+
+    public double getAmount()
+    {
+      return amount;
+    }
+
+    public void setAmount(double amount)
+    {
+      this.amount = amount;
+    }
+
+    public int getProductId()
+    {
+      return productId;
+    }
+
+    public void setProductId(int productId)
+    {
+      this.productId = productId;
+    }
+
+    public int getProductCategory()
+    {
+      return productCategory;
+    }
+
+    public void setProductCategory(int productCategory)
+    {
+      this.productCategory = productCategory;
+    }
+
+    public long getTimestamp()
+    {
+      return timestamp;
+    }
+
+    public void setTimestamp(long timestamp)
+    {
+      this.timestamp = timestamp;
+    }
+  }
+
   public int getMaxProductId()
   {
     return maxProductId;

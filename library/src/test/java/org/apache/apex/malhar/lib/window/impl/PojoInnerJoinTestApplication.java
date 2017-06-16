@@ -179,10 +179,12 @@ public class PojoInnerJoinTestApplication implements StreamingApplication
           //if (System.currentTimeMillis() - startingTime >= (i + 1) * 400) {
           if (isSalesEvent) {
             SalesEvent event = generateSalesEvent();
+            System.out.println(event.toString());
             this.outputsales.emit(new Tuple.WindowedTuple<SalesEvent>(assignTestWindow(System.currentTimeMillis()), event));
             SalesCount++;
           } else {
             ProductEvent event = generateProductEvent();
+            System.out.println(event.toString());
             this.outputproduct.emit(new Tuple.WindowedTuple<ProductEvent>(assignTestWindow(System.currentTimeMillis()), event));
             ProductCount++;
           }
@@ -201,6 +203,11 @@ public class PojoInnerJoinTestApplication implements StreamingApplication
       public int productCategory;
       public double amount;
       public long timestamps;
+
+      @Override
+      public String toString() {
+        return "customerId: " + customerId + ", productId: " + productId;
+      }
 
       public int getCustomerId()
       {
@@ -261,6 +268,11 @@ public class PojoInnerJoinTestApplication implements StreamingApplication
       public int productCategory;
       public long timestamp;
 
+      @Override
+      public String toString() {
+        return "productId: " + productId;
+      }
+
       public int getProductId()
       {
         return productId;
@@ -300,6 +312,12 @@ public class PojoInnerJoinTestApplication implements StreamingApplication
       public long timestamp;
       public double amount;
       public long timestamps;
+
+      @Override
+      public String toString()
+      {
+        return "OUTPUT -- customerId: " + customerId + ", productId: " + productId + ", amount: " + amount;
+      }
 
       public int getCustomerId()
       {
@@ -430,6 +448,7 @@ public class PojoInnerJoinTestApplication implements StreamingApplication
       @Override
       public void process(Object t)
       {
+        System.out.println(t.toString());
         records++;
       }
     };
@@ -440,8 +459,8 @@ public class PojoInnerJoinTestApplication implements StreamingApplication
   @Override
   public void populateDAG(DAG dag, Configuration conf)
   {
-    POJOGenerator salesGenerator = dag.addOperator("Input1", new POJOGenerator(1,1));
-    POJOGenerator productGenerator = dag.addOperator("Input2", new POJOGenerator(1,1));
+    POJOGenerator salesGenerator = dag.addOperator("Input1", new POJOGenerator(100,100));
+    POJOGenerator productGenerator = dag.addOperator("Input2", new POJOGenerator(100,100));
     productGenerator.setSalesEvent(false);
     WindowedMergeOperatorImpl<POJOGenerator.SalesEvent, POJOGenerator.ProductEvent, List<Set<Object>>, List<List<Object>>> op
         = dag.addOperator("Merge", new WindowedMergeOperatorImpl<POJOGenerator.SalesEvent, POJOGenerator.ProductEvent, List<Set<Object>>, List<List<Object>>>());
