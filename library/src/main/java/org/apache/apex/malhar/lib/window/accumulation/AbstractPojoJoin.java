@@ -19,11 +19,7 @@
 package org.apache.apex.malhar.lib.window.accumulation;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.apache.apex.malhar.lib.window.MergeAccumulation;
 import org.apache.commons.lang3.ClassUtils;
@@ -48,14 +44,14 @@ import static org.apache.apex.malhar.lib.window.accumulation.AbstractPojoJoin.ST
 public abstract class AbstractPojoJoin<InputT1, InputT2>
     implements MergeAccumulation<InputT1, InputT2, List<Multimap<List<Object>, Object>>, List<?>>
 {
-  protected String[] keys;
-  protected Class<?> outClass;
-  private transient Map<String,PojoUtils.Getter> gettersStream1;
-  private transient Map<String,PojoUtils.Getter> gettersStream2;
-  protected transient Map<String,PojoUtils.Setter> setters;
+  protected static String[] keys;
+  protected static Class<?> outClass;
+  private static transient Map<String,PojoUtils.Getter> gettersStream1;
+  private static transient Map<String,PojoUtils.Getter> gettersStream2;
+  protected static transient Map<String,PojoUtils.Setter> setters;
   protected transient Map<String, KeyValPair<STREAM, String>> outputToInputMap;
-  protected transient String[] leftKeys;
-  protected transient String[] rightKeys;
+  protected static transient String[] leftKeys;
+  protected static transient String[] rightKeys;
   public enum STREAM
   {
     LEFT, RIGHT
@@ -63,9 +59,10 @@ public abstract class AbstractPojoJoin<InputT1, InputT2>
 
   public AbstractPojoJoin()
   {
-    leftKeys = new String[]{};
-    rightKeys = new String[]{};
-    outClass = null;
+    //leftKeys = new String[]{};
+    //rightKeys = new String[]{};
+    //outClass = null;
+    System.out.println("default constructor is called..");
   }
 
   /**
@@ -77,9 +74,18 @@ public abstract class AbstractPojoJoin<InputT1, InputT2>
     if (leftKeys.length != rightKeys.length) {
       throw new IllegalArgumentException("Number of keys in left stream should match in right stream");
     }
-    this.leftKeys = leftKeys;
-    this.rightKeys = rightKeys;
+    this.leftKeys = Arrays.copyOf(leftKeys, leftKeys.length);
+    this.rightKeys = Arrays.copyOf(rightKeys, rightKeys.length);
     this.outClass = outClass;
+    System.out.println("Constructor left keys: ");
+    for (String reqkey : leftKeys) {
+      System.out.println(reqkey);
+    }
+    System.out.println("Constructor right keys: ");
+    for (String reqkey : rightKeys) {
+      System.out.println(reqkey);
+    }
+
   }
 
   /**
@@ -95,6 +101,14 @@ public abstract class AbstractPojoJoin<InputT1, InputT2>
 
   private void createSetters()
   {
+    System.out.println("createSetters left keys: ");
+    for (String reqkey : this.leftKeys) {
+      System.out.println(reqkey);
+    }
+    System.out.println("createSetters right keys: ");
+    for (String reqkey : this.rightKeys) {
+      System.out.println(reqkey);
+    }
     Field[] fields = outClass.getDeclaredFields();
     setters = new HashMap<>();
     for (Field field : fields) {
@@ -106,6 +120,15 @@ public abstract class AbstractPojoJoin<InputT1, InputT2>
 
   private Map<String,PojoUtils.Getter> createGetters(Class<?> input)
   {
+    System.out.println("createGetters left keys: ");
+    for (String reqkey : this.leftKeys) {
+      System.out.println(reqkey);
+    }
+    System.out.println("createGetters right keys: ");
+    for (String reqkey : this.rightKeys) {
+      System.out.println(reqkey);
+    }
+
     Field[] fields = input.getDeclaredFields();
     Map<String,PojoUtils.Getter> getters = new HashMap<>();
     for (Field field : fields) {
@@ -172,6 +195,7 @@ public abstract class AbstractPojoJoin<InputT1, InputT2>
     for (String lkey : reqKeys ) {
       key.add(gettersStream.get(lkey).get(input));
     }
+    System.out.println("the key for " + input + " is " + key);
     return key;
   }
 
@@ -236,14 +260,17 @@ public abstract class AbstractPojoJoin<InputT1, InputT2>
       Collection<Object> left = leftStream.get(lMap);
       if (rightStream.containsKey(lMap)) {
         Collection<Object> right = rightStream.get(lMap);
-        Object o;
-        try {
-          o = outClass.newInstance();
-        } catch (Throwable e) {
-          throw Throwables.propagate(e);
-        }
+
         for (Object lObj:left) {
           for (Object rObj:right) {
+            System.out.println(lMap);
+            System.out.println("merging " + lObj + " and " + rObj);
+            Object o;
+            try {
+              o = outClass.newInstance();
+            } catch (Throwable e) {
+              throw Throwables.propagate(e);
+            }
             if (outputToInputMap != null) {
               for (Map.Entry<String, KeyValPair<STREAM,String>> entry : outputToInputMap.entrySet()) {
                 KeyValPair<STREAM,String> kv = entry.getValue();
@@ -262,8 +289,8 @@ public abstract class AbstractPojoJoin<InputT1, InputT2>
               setObjectForResult(leftGettersStream, lObj, o);
               setObjectForResult(rightGettersStream, rObj, o);
             }
+            result.add(o);
           }
-          result.add(o);
         }
         rightStream.removeAll(lMap);
       } else {

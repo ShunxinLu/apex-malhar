@@ -34,7 +34,7 @@ public class InnerJoinApplicationTest
     lma.prepareDAG(new InnerJoinApplication(), conf);
     LocalMode.Controller lc = lma.getController();
     lc.runAsync();
-    Thread.sleep(10 * 1000);
+    Thread.sleep(100 * 1000);
     lc.shutdown();
   }
 }

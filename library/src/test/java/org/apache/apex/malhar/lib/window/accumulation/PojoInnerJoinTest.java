@@ -129,6 +129,12 @@ public class PojoInnerJoinTest
     private String uNickName;
     private int age;
 
+    @Override
+    public String toString()
+    {
+      return "(" + uId + "," + uName + "," + uNickName + "," + age + ")";
+    }
+
     public int getUId()
     {
       return uId;
@@ -222,6 +228,7 @@ public class PojoInnerJoinTest
 
     accu = pij.accumulate2(accu, new TestPojo3(1, "NickJosh", 12));
     accu = pij.accumulate2(accu, new TestPojo3(3, "NickBob", 13));
+    accu = pij.accumulate2(accu, new TestPojo3(1, "OtherNickJosh", 2));
 
     Map<String, Object> result = new HashMap<>();
     result.put("uId", 1);
@@ -230,7 +237,7 @@ public class PojoInnerJoinTest
     result.put("age", 12);
 
     Assert.assertEquals(1, pij.getOutput(accu).size());
-
+    System.out.println(pij.getOutput(accu));
     Object o = pij.getOutput(accu).get(0);
     Assert.assertTrue(o instanceof TestOutClass);
     TestOutClass testOutClass = (TestOutClass)o;

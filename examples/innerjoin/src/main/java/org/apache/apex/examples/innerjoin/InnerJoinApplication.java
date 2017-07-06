@@ -19,7 +19,15 @@
 
 package org.apache.apex.examples.innerjoin;
 
-import org.apache.apex.malhar.lib.join.POJOInnerJoinOperator;
+import java.util.List;
+import java.util.Set;
+
+import org.apache.apex.malhar.lib.window.TriggerOption;
+import org.apache.apex.malhar.lib.window.WindowOption;
+import org.apache.apex.malhar.lib.window.WindowState;
+import org.apache.apex.malhar.lib.window.accumulation.PojoInnerJoin;
+import org.apache.apex.malhar.lib.window.impl.InMemoryWindowedStorage;
+import org.apache.apex.malhar.lib.window.impl.WindowedMergeOperatorImpl;
 import org.apache.hadoop.conf.Configuration;
 
 import com.datatorrent.api.Context;
@@ -27,6 +35,7 @@ import com.datatorrent.api.DAG;
 import com.datatorrent.api.StreamingApplication;
 import com.datatorrent.api.annotation.ApplicationAnnotation;
 import com.datatorrent.lib.io.ConsoleOutputOperator;
+
 
 @ApplicationAnnotation(name = "InnerJoinExample")
 /**
@@ -39,22 +48,33 @@ public class InnerJoinApplication implements StreamingApplication
   {
     // SalesEvent Generator
     POJOGenerator salesGenerator = dag.addOperator("Input1", new POJOGenerator());
+    salesGenerator.setMaxProductId(10);
     // ProductEvent Generator
     POJOGenerator productGenerator = dag.addOperator("Input2", new POJOGenerator());
+    productGenerator.setMaxProductId(5);
     productGenerator.setSalesEvent(false);
 
     // Inner join Operator
-    POJOInnerJoinOperator join = dag.addOperator("Join", new POJOInnerJoinOperator());
+    WindowedMergeOperatorImpl<POJOGenerator.SalesEvent, POJOGenerator.ProductEvent, List<Set<Object>>, List<List<Object>>> joinOp
+        = new WindowedMergeOperatorImpl<>();
+    joinOp.setDataStorage(new InMemoryWindowedStorage<List<Set<Object>>>());
+    PojoInnerJoin accu = new PojoInnerJoin(POJOGenerator.SalesEvent.class, new String[]{"productId", "productCategory", "timestamp"}, new String[]{"productId", "productCategory", "timestamp"});
+    joinOp.setAccumulation(accu);
+    joinOp.setWindowStateStorage(new InMemoryWindowedStorage<WindowState>());
+    joinOp.setWindowOption(new WindowOption.GlobalWindow());
+    joinOp.setTriggerOption(new TriggerOption().withEarlyFiringsAtEvery(10));
+
+    dag.addOperator("Join", joinOp);
     ConsoleOutputOperator output = dag.addOperator("Output", new ConsoleOutputOperator());
 
     // Streams
-    dag.addStream("SalesToJoin", salesGenerator.output, join.input1);
-    dag.addStream("ProductToJoin", productGenerator.output, join.input2);
-    dag.addStream("JoinToConsole", join.outputPort, output.input);
+    dag.addStream("SalesToJoin", salesGenerator.outputsales, joinOp.input);
+    dag.addStream("ProductToJoin", productGenerator.outputproduct, joinOp.input2);
+    dag.addStream("JoinToConsole", joinOp.output, output.input);
 
     // Setting tuple class properties to the ports of join operator
-    dag.setInputPortAttribute(join.input1, Context.PortContext.TUPLE_CLASS, POJOGenerator.SalesEvent.class);
-    dag.setInputPortAttribute(join.input2, Context.PortContext.TUPLE_CLASS, POJOGenerator.ProductEvent.class);
-    dag.setOutputPortAttribute(join.outputPort,Context.PortContext.TUPLE_CLASS, POJOGenerator.SalesEvent.class);
+    dag.setInputPortAttribute(joinOp.input, Context.PortContext.TUPLE_CLASS, POJOGenerator.SalesEvent.class);
+    dag.setInputPortAttribute(joinOp.input2, Context.PortContext.TUPLE_CLASS, POJOGenerator.ProductEvent.class);
+    dag.setOutputPortAttribute(joinOp.output,Context.PortContext.TUPLE_CLASS, POJOGenerator.SalesEvent.class);
   }
 }

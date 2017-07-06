@@ -23,6 +23,8 @@ import java.util.Random;
 
 import javax.validation.constraints.Min;
 
+import org.apache.apex.malhar.lib.window.Tuple;
+
 import com.datatorrent.api.Context;
 import com.datatorrent.api.DefaultOutputPort;
 import com.datatorrent.api.InputOperator;
@@ -41,6 +43,7 @@ public class POJOGenerator implements InputOperator
   @Min(1)
   private int maxProductCategories = 100;
   private double maxAmount = 100.0;
+  private int curId;
   private long tuplesCounter;
   private long time;
   private long timeIncrement;
@@ -49,7 +52,8 @@ public class POJOGenerator implements InputOperator
   @Min(0)
   private long maxTuplesPerWindow = 100;
   private final Random random = new Random();
-  public final transient DefaultOutputPort<Object> output = new DefaultOutputPort<>();
+  public final transient DefaultOutputPort<Tuple<SalesEvent>> outputsales = new DefaultOutputPort<>();
+  public final transient DefaultOutputPort<Tuple<ProductEvent>> outputproduct = new DefaultOutputPort<>();
 
   @Override
   public void beginWindow(long windowId)
@@ -66,6 +70,7 @@ public class POJOGenerator implements InputOperator
   @Override
   public void setup(Context.OperatorContext context)
   {
+    curId = 0;
     time = System.currentTimeMillis();
     timeIncrement = context.getValue(Context.OperatorContext.APPLICATION_WINDOW_COUNT) *
       context.getValue(Context.DAGContext.STREAMING_WINDOW_SIZE_MILLIS);
@@ -101,7 +106,8 @@ public class POJOGenerator implements InputOperator
     if (max < 1) {
       return 1;
     }
-    return 1 + random.nextInt(max);
+    return curId++;
+    //return 1 + random.nextInt(max);
   }
 
   private double randomAmount()
@@ -116,10 +122,12 @@ public class POJOGenerator implements InputOperator
       try {
         if (isSalesEvent) {
           SalesEvent event = generateSalesEvent();
-          this.output.emit(event);
+          this.outputsales.emit(new Tuple.TimestampedTuple<SalesEvent>(System.currentTimeMillis(), event));
+          Thread.sleep(500);
         } else {
           ProductEvent event = generateProductEvent();
-          this.output.emit(event);
+          this.outputproduct.emit(new Tuple.TimestampedTuple<ProductEvent>(System.currentTimeMillis(), event));
+          Thread.sleep(500);
         }
 
       } catch (Exception ex) {
@@ -135,6 +143,12 @@ public class POJOGenerator implements InputOperator
     public int productCategory;
     public double amount;
     public long timestamp;
+
+    @Override
+    public String toString()
+    {
+      return "(" + customerId + "," + productId + "," + productCategory + "," + amount + "," + timestamp + ")";
+    }
 
     public int getCustomerId()
     {
@@ -192,6 +206,12 @@ public class POJOGenerator implements InputOperator
     public int productId;
     public int productCategory;
     public long timestamp;
+
+    @Override
+    public String toString()
+    {
+      return "(" + productId + "," + productCategory + "," + timestamp + ")";
+    }
 
     public int getProductId()
     {
